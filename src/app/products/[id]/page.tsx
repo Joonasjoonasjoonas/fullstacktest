@@ -48,9 +48,9 @@ export default async function ProductCustomers({ params }: { params: { id: strin
               key={customer.CustomerID}
               className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 hover:bg-gray-700 transition-colors"
             >
-              <h2 className="text-xl font-bold text-white mb-2">{customer.CustomerName}</h2>
-              <p className="text-gray-300">{customer.ContactName}</p>
-              <p className="text-gray-400">{customer.City}, {customer.Country}</p>
+              <h2 className="text-xl font-bold text-white mb-2">Company: {customer.CustomerName}</h2>
+              <p className="text-gray-300">Contact: {customer.ContactName}</p>
+              <p className="text-gray-400">Location: {customer.City}, {customer.Country}</p>
             </Link>
           ))}
         </div>

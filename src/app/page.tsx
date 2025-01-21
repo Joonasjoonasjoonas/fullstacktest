@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import pool from '@/lib/db'
-import { RowDataPacket } from 'mysql2/promise'
+import { getCategories } from '@/services/db/categories'
+import { getCustomers } from '@/services/db/customers'
 
 interface Category extends RowDataPacket {
   CategoryID: number;
@@ -15,36 +15,6 @@ interface Customer extends RowDataPacket {
   City: string;
   PostalCode: string;
   Country: string;
-}
-
-async function getCategories() {
-  let connection;
-  try {
-    connection = await pool.getConnection();
-    const [categories] = await connection.execute<Category[]>(`
-      SELECT CategoryID, CategoryName, Description
-      FROM Categories
-      ORDER BY CategoryName
-    `);
-    return categories;
-  } finally {
-    if (connection) connection.release();
-  }
-}
-
-async function getCustomers() {
-  let connection;
-  try {
-    connection = await pool.getConnection();
-    const [customers] = await connection.execute<Customer[]>(`
-      SELECT CustomerID, CustomerName, Address, City, PostalCode, Country
-      FROM Customers
-      ORDER BY CustomerName
-    `);
-    return customers;
-  } finally {
-    if (connection) connection.release();
-  }
 }
 
 export default async function Home() {

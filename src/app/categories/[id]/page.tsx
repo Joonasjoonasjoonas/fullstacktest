@@ -1,25 +1,5 @@
 import Link from 'next/link';
-import pool from '@/lib/db';
-
-async function getCategoryProducts(categoryId: string) {
-  let connection;
-  try {
-    connection = await pool.getConnection();
-    const [results] = await connection.query(`
-      SELECT 
-        Products.ProductID,
-        Products.ProductName,
-        Categories.CategoryName
-      FROM Products
-      JOIN Categories ON Products.CategoryID = Categories.CategoryID
-      WHERE Categories.CategoryID = ?
-      ORDER BY Products.ProductName
-    `, [categoryId]);
-    return results;
-  } finally {
-    if (connection) connection.release();
-  }
-}
+import { getCategoryProducts } from '@/services/db/categories';
 
 export default async function CategoryProducts({ params }: { params: { id: string } }) {
   const products = await getCategoryProducts(params.id);
@@ -32,7 +12,7 @@ export default async function CategoryProducts({ params }: { params: { id: strin
           href="/"
           className="text-blue-300 hover:text-blue-200 flex items-center gap-2 mb-4"
         >
-          ← Back to Front Page
+          ← Back to Categories
         </Link>
 
         <h1 className="text-3xl font-bold text-white mb-8">{categoryName} Products</h1>
