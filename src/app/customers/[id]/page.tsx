@@ -14,11 +14,9 @@ async function getCustomerOrders(customerId: string) {
       FROM Orders
       JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
       JOIN Products ON OrderDetails.ProductID = Products.ProductID
-      WHERE Orders.CustomerID= ?
+      WHERE Orders.CustomerID = ?
       ORDER BY Orders.OrderDate DESC
     `, [customerId]);
-    
-    console.log('Found orders:', orders); // Debug log
     return orders;
   } finally {
     if (connection) connection.release();
@@ -38,10 +36,40 @@ async function getCustomerDetails(customerId: string) {
   }
 }
 
+async function getProductsByCategory() {
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    const [results] = await connection.query(`
+      SELECT 
+        Categories.CategoryName,
+        Categories.CategoryID,
+        Products.ProductName
+      FROM Categories
+      LEFT JOIN Products ON Categories.CategoryID = Products.CategoryID
+      ORDER BY Categories.CategoryName, Products.ProductName
+    `);
+    
+    // Group products by category
+    const productsByCategory = results.reduce((acc: any, curr: any) => {
+      if (!acc[curr.CategoryName]) {
+        acc[curr.CategoryName] = [];
+      }
+      acc[curr.CategoryName].push(curr.ProductName);
+      return acc;
+    }, {});
+    
+    return productsByCategory;
+  } finally {
+    if (connection) connection.release();
+  }
+}
+
 export default async function CustomerDetails({ params }: { params: { id: string } }) {
-  const [customer, orders] = await Promise.all([
+  const [customer, orders, productsByCategory] = await Promise.all([
     getCustomerDetails(params.id),
-    getCustomerOrders(params.id)
+    getCustomerOrders(params.id),
+    getProductsByCategory()
   ]);
 
   return (
@@ -52,12 +80,12 @@ export default async function CustomerDetails({ params }: { params: { id: string
             href="/"
             className="text-blue-300 hover:text-blue-200 flex items-center gap-2 mb-4"
           >
-            ← Back to Customers
+            ← Back to Front Page
           </Link>
           
           {customer && (
             <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 mb-8">
-              <h1 className="text-3xl font-bold text-white mb-4">{customer.CompanyName}</h1>
+              <h1 className="text-3xl font-bold text-white mb-4">{customer.CustomerName}</h1>
               <div className="grid grid-cols-2 gap-4 text-gray-300">
                 <div>
                   <p className="font-semibold">Contact:</p>
