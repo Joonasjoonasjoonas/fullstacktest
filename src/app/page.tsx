@@ -1,20 +1,88 @@
 import Link from 'next/link'
-import { getCategories } from '@/services/db/categories'
-import { getCustomers } from '@/services/db/customers'
+import { getCategories, getCustomers, type Category, type Customer } from '@/services/db'
 
-interface Category extends RowDataPacket {
-  CategoryID: number;
-  CategoryName: string;
-  Description: string;
-}
-
-interface Customer extends RowDataPacket {
-  CustomerID: string;
-  CustomerName: string;
-  Address: string;
-  City: string;
-  PostalCode: string;
-  Country: string;
+function AddCustomerForm() {
+  return (
+    <form className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 mb-6">
+      <h2 className="text-2xl font-bold text-white mb-4">Add New Customer</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="customerName" className="block text-sm font-medium text-gray-300 mb-1">
+            Customer Name
+          </label>
+          <input
+            type="text"
+            id="customerName"
+            name="customerName"
+            className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label htmlFor="contactName" className="block text-sm font-medium text-gray-300 mb-1">
+            Contact Name
+          </label>
+          <input
+            type="text"
+            id="contactName"
+            name="contactName"
+            className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label htmlFor="address" className="block text-sm font-medium text-gray-300 mb-1">
+            Address
+          </label>
+          <input
+            type="text"
+            id="address"
+            name="address"
+            className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label htmlFor="city" className="block text-sm font-medium text-gray-300 mb-1">
+            City
+          </label>
+          <input
+            type="text"
+            id="city"
+            name="city"
+            className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label htmlFor="postalCode" className="block text-sm font-medium text-gray-300 mb-1">
+            Postal Code
+          </label>
+          <input
+            type="text"
+            id="postalCode"
+            name="postalCode"
+            className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label htmlFor="country" className="block text-sm font-medium text-gray-300 mb-1">
+            Country
+          </label>
+          <input
+            type="text"
+            id="country"
+            name="country"
+            className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div className="md:col-span-2">
+          <button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+          >
+            Add Customer
+          </button>
+        </div>
+      </div>
+    </form>
+  );
 }
 
 export default async function Home() {
@@ -47,6 +115,7 @@ export default async function Home() {
           {/* Customers Section */}
           <section>
             <h1 className="text-3xl font-bold text-white mb-6">Customers</h1>
+            <AddCustomerForm />
             <div className="grid grid-cols-1 gap-4">
               {customers.map((customer) => (
                 <Link
