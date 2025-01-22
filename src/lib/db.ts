@@ -1,24 +1,35 @@
 import mysql from 'mysql2/promise';
+import type { Pool } from 'mysql2/promise';
 
-const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'user',
-  password: 'password',
-  database: 'northwind',
+if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.DB_NAME) {
+  throw new Error('Database configuration not found in environment variables');
+}
+
+const pool: Pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT || '3306'),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
   waitForConnections: true,
-  connectionLimit: 1, // Reduce to single connection for testing
+  connectionLimit: 10,
+  maxIdle: 10,
+  idleTimeout: 60000,
   queueLimit: 0
 });
 
-// Simple test query function
-export async function testQuery(sql: string, params: any[] = []) {
-  const connection = await pool.getConnection();
+// Simple test query that won't block
+const testConnection = async () => {
   try {
-    const [result] = await connection.query(sql, params);
-    return result;
-  } finally {
-    connection.release();
+    const conn = await pool.getConnection();
+    await conn.ping();
+    conn.release();
+    console.log('Database connected successfully');
+  } catch (err) {
+    console.error('Failed to connect to database:', err);
   }
-}
+};
+
+testConnection();
 
 export default pool; 

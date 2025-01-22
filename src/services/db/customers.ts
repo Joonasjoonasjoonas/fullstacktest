@@ -1,5 +1,6 @@
 import pool from '@/lib/db';
 import { RowDataPacket } from 'mysql2/promise';
+import type { Customer } from '@/services/db';
 
 export interface Customer extends RowDataPacket {
   CustomerID: string;
@@ -31,7 +32,9 @@ export async function getCustomerDetails(customerId: string) {
   try {
     connection = await pool.getConnection();
     const [customers] = await connection.execute<Customer[]>(`
-      SELECT * FROM Customers WHERE CustomerID = ?
+      SELECT CustomerID, CustomerName, ContactName, Address, City, PostalCode, Country 
+      FROM Customers 
+      WHERE CustomerID = ?
     `, [customerId]);
     return customers[0];
   } finally {
@@ -50,5 +53,61 @@ export async function getNextCustomerId() {
     return 'C' + String(Number(lastId.slice(1)) + 1).padStart(4, '0');
   } finally {
     if (connection) connection.release();
+  }
+}
+
+export async function getCustomerOrders(customerId: string) {
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    const [orders] = await connection.execute(`
+      SELECT 
+        Orders.OrderID,
+        Orders.CustomerID,
+        Orders.EmployeeID,
+        Orders.OrderDate,
+        Orders.ShipperID,
+        OrderDetails.ProductID,
+        OrderDetails.Quantity,
+        Products.ProductName,
+        Products.Unit,
+        Products.Price
+      FROM Orders
+      LEFT JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
+      LEFT JOIN Products ON OrderDetails.ProductID = Products.ProductID
+      WHERE Orders.CustomerID = ?
+      ORDER BY Orders.OrderDate DESC
+    `, [customerId]);
+    return orders;
+  } finally {
+    if (connection) connection.release();
+  }
+}
+
+export async function deleteCustomer(customerId: string): Promise<{ success: boolean, error?: string }> {
+  const connection = await pool.getConnection();
+  
+  try {
+    // Simple direct delete - just like we did manually
+    const [result] = await connection.execute(
+      'DELETE FROM Customers WHERE CustomerID = ?',
+      [customerId]
+    );
+
+    // Check if any row was actually deleted
+    const success = (result as any).affectedRows > 0;
+    return { 
+      success,
+      error: success ? undefined : 'Customer not found'
+    };
+    
+  } catch (error) {
+    console.error('Delete error:', error);
+    return { 
+      success: false, 
+      error: `Delete failed: ${String(error)}` 
+    };
+  } finally {
+    connection.release();
   }
 } 

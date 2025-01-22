@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { deleteCustomer } from '@/services/db';
 
 export async function GET(
   request: Request,
@@ -36,5 +37,32 @@ export async function GET(
     if (connection) {
       await connection.release();
     }
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const result = await deleteCustomer(params.id);
+    
+    if (result.success) {
+      return NextResponse.json({ success: true });
+    } else {
+      return NextResponse.json({ 
+        success: false, 
+        error: result.error || 'Unknown error occurred'
+      }, { 
+        status: 500 
+      });
+    }
+  } catch (error) {
+    return NextResponse.json({ 
+      success: false, 
+      error: String(error)
+    }, { 
+      status: 500 
+    });
   }
 } 

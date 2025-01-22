@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import pool from '@/lib/db';
+import { getCustomerDetails } from '@/services/db/customers';
+import { DeleteCustomerButton } from './DeleteCustomerButton';
 
 async function getCustomerOrders(customerId: string) {
   let connection;
@@ -18,19 +20,6 @@ async function getCustomerOrders(customerId: string) {
       ORDER BY Orders.OrderDate DESC
     `, [customerId]);
     return orders;
-  } finally {
-    if (connection) connection.release();
-  }
-}
-
-async function getCustomerDetails(customerId: string) {
-  let connection;
-  try {
-    connection = await pool.getConnection();
-    const [customers] = await connection.query(`
-      SELECT * FROM Customers WHERE CustomerID = ?
-    `, [customerId]);
-    return customers[0];
   } finally {
     if (connection) connection.release();
   }
@@ -66,8 +55,13 @@ async function getProductsByCategory() {
 }
 
 export default async function CustomerDetails({ params }: { params: { id: string } }) {
-  const [customer, orders, productsByCategory] = await Promise.all([
-    getCustomerDetails(params.id),
+  const customer = await getCustomerDetails(params.id);
+
+  if (!customer) {
+    return <div>Customer not found</div>;
+  }
+
+  const [orders, productsByCategory] = await Promise.all([
     getCustomerOrders(params.id),
     getProductsByCategory()
   ]);
@@ -87,6 +81,10 @@ export default async function CustomerDetails({ params }: { params: { id: string
             <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 mb-8">
               <h1 className="text-3xl font-bold text-white mb-4">{customer.CustomerName}</h1>
               <div className="grid grid-cols-2 gap-4 text-gray-300">
+                <div>
+                  <p className="font-semibold">Customer ID:</p>
+                  <p>{customer.CustomerID}</p>
+                </div>
                 <div>
                   <p className="font-semibold">Contact:</p>
                   <p>{customer.ContactName}</p>
@@ -131,6 +129,10 @@ export default async function CustomerDetails({ params }: { params: { id: string
                 )}
               </tbody>
             </table>
+          </div>
+
+          <div className="mt-4">
+            <DeleteCustomerButton customerId={customer.CustomerID} />
           </div>
         </div>
       </main>

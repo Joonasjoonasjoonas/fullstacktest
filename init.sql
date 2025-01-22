@@ -1,4 +1,11 @@
--- First drop tables if they exist
+-- First set global variables at database initialization
+SET GLOBAL wait_timeout = 600;
+SET GLOBAL interactive_timeout = 600;
+SET GLOBAL innodb_lock_wait_timeout = 600;
+SET GLOBAL net_read_timeout = 600;
+SET GLOBAL net_write_timeout = 600;
+
+-- First drop tables in correct order
 DROP TABLE IF EXISTS OrderDetails;
 DROP TABLE IF EXISTS Orders;
 DROP TABLE IF EXISTS Products;
@@ -15,7 +22,7 @@ DROP TABLE IF EXISTS TasksV2;
 DROP TABLE IF EXISTS PersonsV2;
 DROP TABLE IF EXISTS Persons_Tasks;
 
--- Create tables with MariaDB syntax
+-- Create tables with CASCADE delete
 CREATE TABLE Categories (      
     CategoryID INT PRIMARY KEY AUTO_INCREMENT,
     CategoryName TEXT,
@@ -29,7 +36,8 @@ CREATE TABLE Customers (
     Address TEXT,
     City TEXT,
     PostalCode TEXT,
-    Country TEXT
+    Country TEXT,
+    INDEX idx_customer (CustomerID)  -- Add index for CustomerID
 );
 
 CREATE TABLE Employees (
@@ -75,9 +83,10 @@ CREATE TABLE Orders (
     EmployeeID INT,
     OrderDate DATETIME,
     ShipperID INT,
-    FOREIGN KEY (EmployeeID) REFERENCES Employees (EmployeeID),
-    FOREIGN KEY (CustomerID) REFERENCES Customers (CustomerID),
-    FOREIGN KEY (ShipperID) REFERENCES Shippers (ShipperID)
+    INDEX idx_customer_order (CustomerID),  -- Add index for CustomerID in Orders
+    FOREIGN KEY (CustomerID) REFERENCES Customers (CustomerID) ON DELETE CASCADE,
+    FOREIGN KEY (EmployeeID) REFERENCES Employees (EmployeeID) ON DELETE CASCADE,
+    FOREIGN KEY (ShipperID) REFERENCES Shippers (ShipperID) ON DELETE CASCADE
 );
 
 CREATE TABLE OrderDetails (
@@ -85,8 +94,9 @@ CREATE TABLE OrderDetails (
     OrderID INT,
     ProductID INT,
     Quantity INT,
-    FOREIGN KEY (OrderID) REFERENCES Orders (OrderID),
-    FOREIGN KEY (ProductID) REFERENCES Products (ProductID)
+    INDEX idx_order (OrderID),  -- Add index for OrderID
+    FOREIGN KEY (OrderID) REFERENCES Orders (OrderID) ON DELETE CASCADE,
+    FOREIGN KEY (ProductID) REFERENCES Products (ProductID) ON DELETE CASCADE
 );
 
 INSERT INTO Categories VALUES(1,'Beverages','Soft drinks, coffees, teas, beers, and ales');

@@ -40,4 +40,26 @@ export async function getCategoryProducts(categoryId: string) {
   } finally {
     if (connection) connection.release();
   }
+}
+
+export async function getProductsByCategory() {
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    const [results] = await connection.execute(`
+      SELECT 
+        Categories.CategoryID,
+        Categories.CategoryName,
+        Products.ProductID,
+        Products.ProductName,
+        Products.Unit,
+        Products.Price
+      FROM Categories
+      LEFT JOIN Products ON Categories.CategoryID = Products.CategoryID
+      ORDER BY Categories.CategoryName, Products.ProductName
+    `);
+    return results;
+  } finally {
+    if (connection) connection.release();
+  }
 } 
