@@ -17,10 +17,14 @@ export default async function Home() {
             <h1 className="text-3xl font-bold text-white mb-6">Product Categories</h1>
             <div className="grid grid-cols-1 gap-4">
               {categories.map((category) => (
-                <div key={category.CategoryID} className="bg-gray-800 p-4 rounded-lg">
+                <Link
+                  href={`/categories/${category.CategoryID}`}
+                  key={category.CategoryID}
+                  className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-colors"
+                >
                   <h2 className="text-xl font-semibold text-white">{category.CategoryName}</h2>
                   <p className="mt-2">{category.Description}</p>
-                </div>
+                </Link>
               ))}
             </div>
           </section>
@@ -30,13 +34,17 @@ export default async function Home() {
             <AddCustomerForm />
             <div className="grid grid-cols-1 gap-4">
               {customers.map((customer) => (
-                <div key={customer.CustomerID} className="bg-gray-800 p-4 rounded-lg">
+                <Link
+                  href={`/customers/${customer.CustomerID}`}
+                  key={customer.CustomerID}
+                  className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-colors"
+                >
                   <h2 className="text-xl font-semibold text-white">{customer.CustomerName}</h2>
                   <p>{customer.ContactName}</p>
                   <p>{customer.Address}</p>
                   <p>{customer.City}, {customer.PostalCode}</p>
                   <p>{customer.Country}</p>
-                </div>
+                </Link>
               ))}
             </div>
           </section>
