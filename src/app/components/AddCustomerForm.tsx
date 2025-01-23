@@ -124,7 +124,7 @@ export function AddCustomerForm() {
             type="text"
             id="customerName"
             name="customerName"
-            className={`w-full bg-gray-700 border ${errors.customerName ? 'border-red-500' : 'border-gray-600'} rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            className={`w-full bg-gray-700 border ${errors.customerName ? 'border-red-500' : 'border-gray-600'} rounded-md px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500`}
           />
           {errors.customerName && (
             <p className="text-red-400 text-sm mt-1">{errors.customerName}</p>
@@ -139,7 +139,7 @@ export function AddCustomerForm() {
             type="text"
             id="contactName"
             name="contactName"
-            className={`w-full bg-gray-700 border ${errors.contactName ? 'border-red-500' : 'border-gray-600'} rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            className={`w-full bg-gray-700 border ${errors.contactName ? 'border-red-500' : 'border-gray-600'} rounded-md px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500`}
           />
           {errors.contactName && (
             <p className="text-red-400 text-sm mt-1">{errors.contactName}</p>
@@ -154,7 +154,7 @@ export function AddCustomerForm() {
             type="text"
             id="address"
             name="address"
-            className={`w-full bg-gray-700 border ${errors.address ? 'border-red-500' : 'border-gray-600'} rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            className={`w-full bg-gray-700 border ${errors.address ? 'border-red-500' : 'border-gray-600'} rounded-md px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500`}
           />
           {errors.address && (
             <p className="text-red-400 text-sm mt-1">{errors.address}</p>
@@ -169,7 +169,7 @@ export function AddCustomerForm() {
             type="text"
             id="city"
             name="city"
-            className={`w-full bg-gray-700 border ${errors.city ? 'border-red-500' : 'border-gray-600'} rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            className={`w-full bg-gray-700 border ${errors.city ? 'border-red-500' : 'border-gray-600'} rounded-md px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500`}
           />
           {errors.city && (
             <p className="text-red-400 text-sm mt-1">{errors.city}</p>
@@ -184,7 +184,7 @@ export function AddCustomerForm() {
             type="text"
             id="postalCode"
             name="postalCode"
-            className={`w-full bg-gray-700 border ${errors.postalCode ? 'border-red-500' : 'border-gray-600'} rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            className={`w-full bg-gray-700 border ${errors.postalCode ? 'border-red-500' : 'border-gray-600'} rounded-md px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500`}
           />
           {errors.postalCode && (
             <p className="text-red-400 text-sm mt-1">{errors.postalCode}</p>
@@ -199,7 +199,7 @@ export function AddCustomerForm() {
             type="text"
             id="country"
             name="country"
-            className={`w-full bg-gray-700 border ${errors.country ? 'border-red-500' : 'border-gray-600'} rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            className={`w-full bg-gray-700 border ${errors.country ? 'border-red-500' : 'border-gray-600'} rounded-md px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500`}
           />
           {errors.country && (
             <p className="text-red-400 text-sm mt-1">{errors.country}</p>
