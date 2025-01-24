@@ -8,7 +8,21 @@ The Fullstack App is a web application designed to manage customer data. It prov
 
 ## Getting Started
 
-First, run the development server:
+### Database Setup
+
+1. Copy the `.env_example` file to `.env` and fill in the environment variables:
+
+```bash
+cp .env_example .env
+```
+
+2. Run the Docker container:
+
+```bash
+docker compose up -d
+```
+
+3. Run the development server:  
 
 ```bash
 npm run dev
