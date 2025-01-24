@@ -12,6 +12,15 @@ export interface Customer extends RowDataPacket {
   Country: string;
 }
 
+export interface CreateCustomerData {
+  customerName: string;
+  contactName: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  country: string;
+}
+
 export async function getCustomers() {
   let connection;
   try {
@@ -109,5 +118,40 @@ export async function deleteCustomer(customerId: string): Promise<{ success: boo
     };
   } finally {
     connection.release();
+  }
+}
+
+export async function createCustomer(data: CreateCustomerData) {
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    
+    const [result] = await connection.execute(
+      `INSERT INTO Customers (
+        CustomerName, ContactName, 
+        Address, City, PostalCode, Country
+      ) VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        data.customerName,
+        data.contactName,
+        data.address,
+        data.city,
+        data.postalCode,
+        data.country,
+      ]
+    );
+
+    return { 
+      success: true, 
+      customerId: (result as any).insertId 
+    };
+  } catch (error) {
+    console.error('Create customer error:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to create customer'
+    };
+  } finally {
+    if (connection) connection.release();
   }
 } 

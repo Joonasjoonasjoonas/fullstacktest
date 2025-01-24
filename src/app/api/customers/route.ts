@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { createCustomer } from '@/services/db/customers';
 
 function validateInput(value: string): boolean {
   if (!value || typeof value !== 'string') return false;
@@ -53,53 +54,23 @@ export async function POST(request: Request) {
       }
     }
     
-    let connection;
-    try {
-      connection = await pool.getConnection();
-      console.log('Database connection established');
-      
-      // Insert new customer (let MySQL handle the ID auto-increment)
-      const query = `INSERT INTO Customers (
-        CustomerName, ContactName, 
-        Address, City, PostalCode, Country
-      ) VALUES (?, ?, ?, ?, ?, ?)`;
-      
-      const values = [
-        body.customerName,
-        body.contactName,
-        body.address,
-        body.city,
-        body.postalCode,
-        body.country,
-      ];
-      
-      console.log('Executing query:', query);
-      console.log('With values:', values);
-      
-      const [result] = await connection.execute(query, values);
-      console.log('Customer added successfully:', result);
-      
+    const result = await createCustomer(body);
+    
+    if (result.success) {
       return NextResponse.json({ 
         success: true, 
-        customerId: result.insertId 
+        customerId: result.customerId 
       });
-    } catch (dbError) {
-      console.error('Database error:', dbError);
-      throw dbError;
-    } finally {
-      if (connection) {
-        connection.release();
-        console.log('Database connection released');
-      }
+    } else {
+      return NextResponse.json(
+        { success: false, error: result.error },
+        { status: 500 }
+      );
     }
   } catch (error) {
-    console.error('Error adding customer:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
+    console.error('API error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to add customer' },
+      { success: false, error: 'Failed to process request' },
       { status: 500 }
     );
   }

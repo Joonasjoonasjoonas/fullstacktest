@@ -1,70 +1,16 @@
 import Link from 'next/link';
-import pool from '@/lib/db';
-import { getCustomerDetails } from '@/services/db/customers';
+import { getCustomerDetails, getCustomerOrders } from '@/services/db/customers';
+import { getProductsByCategory } from '@/services/db/products';
 import { DeleteCustomerButton } from './DeleteCustomerButton';
 
-async function getCustomerOrders(customerId: string) {
-  let connection;
-  try {
-    connection = await pool.getConnection();
-    const [orders] = await connection.query(`
-      SELECT 
-        Orders.OrderID,
-        Orders.OrderDate,
-        OrderDetails.Quantity,
-        Products.ProductName
-      FROM Orders
-      JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
-      JOIN Products ON OrderDetails.ProductID = Products.ProductID
-      WHERE Orders.CustomerID = ?
-      ORDER BY Orders.OrderDate DESC
-    `, [customerId]);
-    return orders;
-  } finally {
-    if (connection) connection.release();
-  }
-}
-
-async function getProductsByCategory() {
-  let connection;
-  try {
-    connection = await pool.getConnection();
-    const [results] = await connection.query(`
-      SELECT 
-        Categories.CategoryName,
-        Categories.CategoryID,
-        Products.ProductName
-      FROM Categories
-      LEFT JOIN Products ON Categories.CategoryID = Products.CategoryID
-      ORDER BY Categories.CategoryName, Products.ProductName
-    `);
-    
-    // Group products by category
-    const productsByCategory = results.reduce((acc: any, curr: any) => {
-      if (!acc[curr.CategoryName]) {
-        acc[curr.CategoryName] = [];
-      }
-      acc[curr.CategoryName].push(curr.ProductName);
-      return acc;
-    }, {});
-    
-    return productsByCategory;
-  } finally {
-    if (connection) connection.release();
-  }
-}
-
-export default async function CustomerDetails({ params }: { params: { id: string } }) {
+export default async function CustomerPage({ params }: { params: { id: string } }) {
   const customer = await getCustomerDetails(params.id);
+  const orders = await getCustomerOrders(params.id);
+  const productsByCategory = await getProductsByCategory();
 
   if (!customer) {
     return <div>Customer not found</div>;
   }
-
-  const [orders, productsByCategory] = await Promise.all([
-    getCustomerOrders(params.id),
-    getProductsByCategory()
-  ]);
 
   return (
     <div className="min-h-screen bg-gray-900">
