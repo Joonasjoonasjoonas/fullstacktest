@@ -1,42 +1,35 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { Customer } from '@/services/db/customers';
+import { RowDataPacket } from 'mysql2';
 import { deleteCustomer } from '@/services/db';
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  let connection;
+  const connection = await pool.getConnection();
   try {
-    console.log('Fetching customer details:', params.id);
-    connection = await pool.getConnection();
+    const [customers] = await connection.execute<Customer[]>(`
+      SELECT * FROM Customers WHERE CustomerID = ?
+    `, [params.id]);
 
-    const [customers] = await connection.query(
-      'SELECT * FROM Customers WHERE customerid = ?',
-      [params.id]
-    );
-
-    if (!customers || customers.length === 0) {
+    if (!Array.isArray(customers) || customers.length === 0) {
       return NextResponse.json(
         { message: 'Customer not found' },
         { status: 404 }
       );
     }
 
-    const customer = customers[0];
-    console.log('Found customer:', customer);
-    
-    return NextResponse.json(customer);
+    return NextResponse.json(customers[0]);
   } catch (error) {
-    console.error('Error fetching customer:', error);
+    console.error('Database error:', error);
     return NextResponse.json(
-      { message: 'Failed to fetch customer details', error: String(error) },
+      { message: 'Failed to fetch customer' },
       { status: 500 }
     );
   } finally {
-    if (connection) {
-      await connection.release();
-    }
+    connection.release();
   }
 }
 
