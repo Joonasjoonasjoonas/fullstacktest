@@ -3,7 +3,7 @@ import { RowDataPacket } from 'mysql2/promise';
 import type { Customer } from '@/services/db';
 
 export interface Customer extends RowDataPacket {
-  CustomerID: string;
+  CustomerID: number;
   CustomerName: string;
   ContactName: string;
   Address: string;
@@ -93,31 +93,79 @@ export async function getCustomerOrders(customerId: string) {
   }
 }
 
-export async function deleteCustomer(customerId: string): Promise<{ success: boolean, error?: string }> {
-  const connection = await pool.getConnection();
+export async function deleteCustomer(customerId: number): Promise<{ success: boolean, error?: string }> {
+  let connection;
+  console.log('Starting delete operation for customer:', customerId);
   
   try {
-    // Simple direct delete - just like we did manually
-    const [result] = await connection.execute(
-      'DELETE FROM Customers WHERE CustomerID = ?',
-      [customerId]
-    );
-
-    // Check if any row was actually deleted
-    const success = (result as any).affectedRows > 0;
-    return { 
-      success,
-      error: success ? undefined : 'Customer not found'
-    };
+    // Get a connection from the pool
+    connection = await pool.getConnection();
+    console.log('Got connection');
     
+    // Begin transaction
+    await connection.beginTransaction();
+    console.log('Started transaction');
+
+    // Do everything in a single query to minimize roundtrips
+    const [result] = await connection.execute(`
+      DO $$
+      DECLARE orderCount INT;
+      BEGIN
+        -- Check for orders
+        SELECT COUNT(*) INTO orderCount FROM Orders WHERE CustomerID = ?;
+        
+        IF orderCount > 0 THEN
+          SIGNAL SQLSTATE '45000'
+          SET MESSAGE_TEXT = 'Customer has existing orders';
+        ELSE
+          DELETE FROM Customers WHERE CustomerID = ?;
+        END IF;
+      END $$;
+    `, [customerId, customerId]);
+
+    // If we got here, commit the transaction
+    await connection.commit();
+    console.log('Transaction committed');
+    
+    return { 
+      success: true,
+      message: 'Customer deleted successfully'
+    };
+
   } catch (error) {
+    // Rollback on error
+    if (connection) {
+      try {
+        await connection.rollback();
+        console.log('Transaction rolled back');
+      } catch (rollbackError) {
+        console.error('Rollback failed:', rollbackError);
+      }
+    }
+
     console.error('Delete error:', error);
+    
+    // Check for specific error messages
+    if (error.message?.includes('Customer has existing orders')) {
+      return {
+        success: false,
+        error: 'Cannot delete customer: Has existing orders. Please delete orders first.'
+      };
+    }
+
     return { 
       success: false, 
-      error: `Delete failed: ${String(error)}` 
+      error: error instanceof Error ? error.message : String(error)
     };
   } finally {
-    connection.release();
+    if (connection) {
+      try {
+        await connection.release();
+        console.log('Connection released');
+      } catch (releaseError) {
+        console.error('Error releasing connection:', releaseError);
+      }
+    }
   }
 }
 

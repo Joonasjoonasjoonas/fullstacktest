@@ -12,6 +12,8 @@ export default async function CustomerPage({ params }: { params: { id: string } 
     return <div>Customer not found</div>;
   }
 
+  console.log('Rendering customer page with ID:', params.id);
+
   return (
     <div className="min-h-screen bg-gray-900">
       <main className="container mx-auto px-4 py-8">
@@ -78,7 +80,7 @@ export default async function CustomerPage({ params }: { params: { id: string } 
           </div>
 
           <div className="mt-4">
-            <DeleteCustomerButton customerId={customer.CustomerID} />
+            <DeleteCustomerButton customerId={params.id} />
           </div>
         </div>
       </main>
