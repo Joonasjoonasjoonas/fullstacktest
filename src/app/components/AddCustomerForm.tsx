@@ -24,16 +24,6 @@ function validateInput(name: string, value: string): string | undefined {
   if (value.length > 100) {
     return `${name} must be less than 100 characters`;
   }
-  // Check for SQL injection patterns
-  if (value.toLowerCase().includes('select') || 
-      value.toLowerCase().includes('insert') || 
-      value.toLowerCase().includes('delete') || 
-      value.toLowerCase().includes('update') ||
-      value.includes(';') ||
-      value.includes('--') ||
-      value.includes('/*')) {
-    return 'Invalid input';
-  }
   return undefined;
 }
 
