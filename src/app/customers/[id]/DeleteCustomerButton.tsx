@@ -53,8 +53,8 @@ export function DeleteCustomerButton({ customerId }: { customerId: string }) {
         }
       }, 100);
 
-    } catch (error) {
-      if (error.name === 'AbortError') {
+    } catch (error: unknown) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
         console.error('Request timed out');
         alert('Request timed out. Please try again.');
       } else {
