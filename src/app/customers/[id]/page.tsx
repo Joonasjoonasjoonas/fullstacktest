@@ -2,10 +2,24 @@ import Link from 'next/link';
 import { getCustomerDetails, getCustomerOrders } from '@/services/db/customers';
 import { getProductsByCategory } from '@/services/db/products';
 import { DeleteCustomerButton } from './DeleteCustomerButton';
+import { RowDataPacket } from 'mysql2';
+
+interface CustomerOrder extends RowDataPacket {
+  OrderID: number;
+  CustomerID: string;
+  EmployeeID: number;
+  OrderDate: Date;
+  ShipperID: number;
+  ProductID: number;
+  Quantity: number;
+  ProductName: string;
+  Unit: string;
+  Price: number;
+}
 
 export default async function CustomerPage({ params }: { params: { id: string } }) {
   const customer = await getCustomerDetails(params.id);
-  const orders = await getCustomerOrders(params.id);
+  const orders = await getCustomerOrders(params.id) as CustomerOrder[];
   const productsByCategory = await getProductsByCategory();
 
   if (!customer) {
@@ -58,7 +72,7 @@ export default async function CustomerPage({ params }: { params: { id: string } 
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700">
-                {orders.map((order: any) => (
+                {orders.map((order) => (
                   <tr key={`${order.OrderID}-${order.ProductName}`} className="hover:bg-gray-700/50">
                     <td className="px-6 py-4 text-gray-300">{order.OrderID}</td>
                     <td className="px-6 py-4 text-gray-300">

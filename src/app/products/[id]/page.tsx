@@ -1,5 +1,15 @@
 import Link from 'next/link';
 import { getProductCustomers } from '@/services/db/products';
+import { RowDataPacket } from 'mysql2';
+
+interface ProductCustomer extends RowDataPacket {
+  CustomerID: string;
+  CustomerName: string;
+  ContactName: string;
+  City: string;
+  Country: string;
+  ProductName: string;
+}
 
 export default async function ProductCustomers({ params }: { params: { id: string } }) {
   const customers = await getProductCustomers(params.id);
@@ -20,7 +30,7 @@ export default async function ProductCustomers({ params }: { params: { id: strin
         </h1>
 
         <div className="grid grid-cols-1 gap-4">
-          {customers.map((customer: any) => (
+          {customers.map((customer: ProductCustomer) => (
             <Link
               key={customer.CustomerID}
               href={`/customers/${customer.CustomerID}`}

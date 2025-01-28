@@ -92,14 +92,14 @@ export async function DELETE(
 
   // Create an abort controller with a 10-second timeout
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // Increased to 10 seconds
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
 
   try {
     // Mark delete as in progress
     activeDeletes.set(customerId, Date.now());
     console.log('Starting delete for customer:', customerId);
 
-    const result = await deleteCustomer(parseInt(customerId, 10));
+    const result = await deleteCustomer(customerId);
     console.log('Delete result:', result);
 
     if (result.success) {

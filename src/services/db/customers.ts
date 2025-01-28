@@ -1,9 +1,8 @@
 import pool from '@/lib/db';
 import { RowDataPacket } from 'mysql2/promise';
-import type { Customer } from '@/services/db';
 
 export interface Customer extends RowDataPacket {
-  CustomerID: number;
+  CustomerID: string;
   CustomerName: string;
   ContactName: string;
   Address: string;
@@ -55,7 +54,7 @@ export async function getNextCustomerId() {
   let connection;
   try {
     connection = await pool.getConnection();
-    const [lastCustomer] = await connection.execute(
+    const [lastCustomer] = await connection.execute<Customer[]>(
       'SELECT CustomerID FROM Customers ORDER BY CustomerID DESC LIMIT 1'
     );
     const lastId = lastCustomer[0]?.CustomerID || 'C0000';
@@ -65,11 +64,24 @@ export async function getNextCustomerId() {
   }
 }
 
-export async function getCustomerOrders(customerId: string) {
+interface CustomerOrder extends RowDataPacket {
+  OrderID: number;
+  CustomerID: string;
+  EmployeeID: number;
+  OrderDate: Date;
+  ShipperID: number;
+  ProductID: number;
+  Quantity: number;
+  ProductName: string;
+  Unit: string;
+  Price: number;
+}
+
+export async function getCustomerOrders(customerId: string): Promise<CustomerOrder[]> {
   let connection;
   try {
     connection = await pool.getConnection();
-    const [orders] = await connection.execute(`
+    const [orders] = await connection.execute<CustomerOrder[]>(`
       SELECT 
         Orders.OrderID,
         Orders.CustomerID,
@@ -87,53 +99,66 @@ export async function getCustomerOrders(customerId: string) {
       WHERE Orders.CustomerID = ?
       ORDER BY Orders.OrderDate DESC
     `, [customerId]);
+    
     return orders;
   } finally {
     if (connection) connection.release();
   }
 }
 
-export async function deleteCustomer(customerId: number): Promise<{ success: boolean, error?: string }> {
+export async function deleteCustomer(customerId: string): Promise<{ 
+  success: boolean;
+  error?: string;
+  message?: string;
+}> {
   let connection;
   console.log('Starting delete operation for customer:', customerId);
   
   try {
-    // Get a connection from the pool
     connection = await pool.getConnection();
     console.log('Got connection');
     
-    // Begin transaction
     await connection.beginTransaction();
     console.log('Started transaction');
 
-    // Do everything in a single query to minimize roundtrips
-    const [result] = await connection.execute(`
-      DO $$
-      DECLARE orderCount INT;
-      BEGIN
-        -- Check for orders
-        SELECT COUNT(*) INTO orderCount FROM Orders WHERE CustomerID = ?;
-        
-        IF orderCount > 0 THEN
-          SIGNAL SQLSTATE '45000'
-          SET MESSAGE_TEXT = 'Customer has existing orders';
-        ELSE
-          DELETE FROM Customers WHERE CustomerID = ?;
-        END IF;
-      END $$;
-    `, [customerId, customerId]);
+    // First check if customer has orders
+    const [orderCheck] = await connection.execute<RowDataPacket[]>(
+      'SELECT EXISTS(SELECT 1 FROM Orders WHERE CustomerID = ?) as hasOrders',
+      [customerId]
+    );
 
-    // If we got here, commit the transaction
+    if (orderCheck[0].hasOrders) {
+      await connection.rollback();
+      return {
+        success: false,
+        error: 'Cannot delete customer: Has existing orders. Please delete orders first.'
+      };
+    }
+
+    // If no orders exist, proceed with delete
+    const [deleteResult] = await connection.execute(
+      'DELETE FROM Customers WHERE CustomerID = ?',
+      [customerId]
+    );
+
     await connection.commit();
     console.log('Transaction committed');
+    
+    // Check if any rows were affected
+    const rowsAffected = (deleteResult as any).affectedRows;
+    if (rowsAffected === 0) {
+      return {
+        success: false,
+        error: 'Customer not found'
+      };
+    }
     
     return { 
       success: true,
       message: 'Customer deleted successfully'
     };
 
-  } catch (error) {
-    // Rollback on error
+  } catch (error: unknown) {
     if (connection) {
       try {
         await connection.rollback();
@@ -144,15 +169,6 @@ export async function deleteCustomer(customerId: number): Promise<{ success: boo
     }
 
     console.error('Delete error:', error);
-    
-    // Check for specific error messages
-    if (error.message?.includes('Customer has existing orders')) {
-      return {
-        success: false,
-        error: 'Cannot delete customer: Has existing orders. Please delete orders first.'
-      };
-    }
-
     return { 
       success: false, 
       error: error instanceof Error ? error.message : String(error)

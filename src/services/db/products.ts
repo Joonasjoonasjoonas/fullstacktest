@@ -1,5 +1,15 @@
 import pool from '@/lib/db';
 import type { Product } from './index';
+import { RowDataPacket } from 'mysql2/promise';
+
+interface ProductCustomer extends RowDataPacket {
+  CustomerID: string;
+  CustomerName: string;
+  ContactName: string;
+  City: string;
+  Country: string;
+  ProductName: string;
+}
 
 export async function getProducts() {
   let connection;
@@ -15,11 +25,11 @@ export async function getProducts() {
   }
 }
 
-export async function getProductCustomers(productId: string) {
+export async function getProductCustomers(productId: string): Promise<ProductCustomer[]> {
   let connection;
   try {
     connection = await pool.getConnection();
-    const [results] = await connection.execute(`
+    const [results] = await connection.execute<ProductCustomer[]>(`
       SELECT DISTINCT
         Customers.CustomerID,
         Customers.CustomerName,
@@ -44,7 +54,7 @@ export async function getProductsByCategory() {
   let connection;
   try {
     connection = await pool.getConnection();
-    const [results] = await connection.execute(`
+    const [results] = await connection.execute<RowDataPacket[]>(`
       SELECT 
         Categories.CategoryName,
         Categories.CategoryID,
@@ -55,7 +65,7 @@ export async function getProductsByCategory() {
     `);
     
     // Group products by category
-    const productsByCategory = results.reduce((acc: any, curr: any) => {
+    const productsByCategory = (results as any[]).reduce((acc: any, curr: any) => {
       if (!acc[curr.CategoryName]) {
         acc[curr.CategoryName] = [];
       }
@@ -68,4 +78,3 @@ export async function getProductsByCategory() {
     if (connection) connection.release();
   }
 }
-

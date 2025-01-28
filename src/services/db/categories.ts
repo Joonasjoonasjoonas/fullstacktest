@@ -42,11 +42,20 @@ export async function getCategoryProducts(categoryId: string) {
   }
 }
 
-export async function getProductsByCategory() {
+interface CategoryProductGroup extends RowDataPacket {
+  CategoryID: number;
+  CategoryName: string;
+  ProductID: number;
+  ProductName: string;
+  Unit: string;
+  Price: number;
+}
+
+export async function getProductsByCategory(): Promise<CategoryProductGroup[]> {
   let connection;
   try {
     connection = await pool.getConnection();
-    const [results] = await connection.execute(`
+    const [results] = await connection.execute<CategoryProductGroup[]>(`
       SELECT 
         Categories.CategoryID,
         Categories.CategoryName,
