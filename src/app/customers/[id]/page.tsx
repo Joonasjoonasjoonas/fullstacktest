@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { getCustomerDetails, getCustomerOrders } from '@/services/db/customers';
-import { getProductsByCategory } from '@/services/db/products';
+import { getCustomerOrders } from '@/services/db/customers';
 import { DeleteCustomerButton } from './DeleteCustomerButton';
 import { RowDataPacket } from 'mysql2';
+import { getCustomerById } from '@/app/actions';
 
 interface CustomerOrder extends RowDataPacket {
   OrderID: number;
@@ -18,26 +18,30 @@ interface CustomerOrder extends RowDataPacket {
 }
 
 export default async function CustomerPage({ params }: { params: { id: string } }) {
-  const customer = await getCustomerDetails(params.id);
-  const orders = await getCustomerOrders(params.id) as CustomerOrder[];
-  const productsByCategory = await getProductsByCategory();
-
-  if (!customer) {
-    return <div>Customer not found</div>;
+  const result = await getCustomerById(params.id);
+  
+  if (!result.success) {
+    return <div>Error: {result.error}</div>;
   }
+
+  const customer = result.data;
+  const orders = await getCustomerOrders(params.id) as CustomerOrder[];
 
   console.log('Rendering customer page with ID:', params.id);
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-gray-900 text-gray-300">
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <Link 
-            href="/"
-            className="text-blue-300 hover:text-blue-200 flex items-center gap-2 mb-4"
-          >
-            ← Back to Front Page
-          </Link>
+        <div className="bg-gray-800 rounded-lg p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold text-white">{customer.CustomerName}</h1>
+            <Link 
+              href="/" 
+              className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600"
+            >
+              Back to Home Page
+            </Link>
+          </div>
           
           {customer && (
             <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 mb-8">

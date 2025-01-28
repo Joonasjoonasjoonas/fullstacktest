@@ -117,39 +117,31 @@ export async function deleteCustomer(customerId: string): Promise<{
   try {
     connection = await pool.getConnection();
     console.log('Got connection');
-    
-    await connection.beginTransaction();
-    console.log('Started transaction');
 
-    // First check if customer has orders
-    const [orderCheck] = await connection.execute<RowDataPacket[]>(
-      'SELECT EXISTS(SELECT 1 FROM Orders WHERE CustomerID = ?) as hasOrders',
+    // Simple check if customer exists
+    const [customerCheck] = await connection.execute<RowDataPacket[]>(
+      'SELECT 1 FROM Customers WHERE CustomerID = ?',
       [customerId]
     );
 
-    if (orderCheck[0].hasOrders) {
-      await connection.rollback();
+    if (!customerCheck.length) {
       return {
         success: false,
-        error: 'Cannot delete customer: Has existing orders. Please delete orders first.'
+        error: 'Customer not found'
       };
     }
 
-    // If no orders exist, proceed with delete
+    // Attempt delete (will fail if there are orders due to foreign key constraints)
     const [deleteResult] = await connection.execute(
       'DELETE FROM Customers WHERE CustomerID = ?',
       [customerId]
     );
 
-    await connection.commit();
-    console.log('Transaction committed');
-    
-    // Check if any rows were affected
     const rowsAffected = (deleteResult as any).affectedRows;
     if (rowsAffected === 0) {
       return {
         success: false,
-        error: 'Customer not found'
+        error: 'Failed to delete customer'
       };
     }
     
@@ -159,28 +151,22 @@ export async function deleteCustomer(customerId: string): Promise<{
     };
 
   } catch (error: unknown) {
-    if (connection) {
-      try {
-        await connection.rollback();
-        console.log('Transaction rolled back');
-      } catch (rollbackError) {
-        console.error('Rollback failed:', rollbackError);
-      }
-    }
-
     console.error('Delete error:', error);
+    // Check for foreign key constraint violation
+    if (error instanceof Error && error.message.includes('foreign key constraint')) {
+      return { 
+        success: false, 
+        error: 'Cannot delete customer: Has existing orders. Please delete orders first.'
+      };
+    }
     return { 
       success: false, 
       error: error instanceof Error ? error.message : String(error)
     };
   } finally {
     if (connection) {
-      try {
-        await connection.release();
-        console.log('Connection released');
-      } catch (releaseError) {
-        console.error('Error releasing connection:', releaseError);
-      }
+      await connection.release();
+      console.log('Connection released');
     }
   }
 }

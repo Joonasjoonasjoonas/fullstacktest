@@ -1,13 +1,20 @@
 import Link from 'next/link'
-import { getCategories, getCustomers, type Category, type Customer } from '@/services/db'
+import { getCategories, getCustomers } from '@/app/actions'
 import { AddCustomerForm } from '@/app/components/AddCustomerForm'
 
 // Add revalidation to ensure fresh data
 export const revalidate = 0;
 
 export default async function Home() {
-  const categories = await getCategories();
-  const customers = await getCustomers();
+  const categoriesResult = await getCategories();
+  const customersResult = await getCustomers();
+
+  if (!categoriesResult.success || !customersResult.success) {
+    return <div>Error loading data</div>;
+  }
+
+  const categories = categoriesResult.data;
+  const customers = customersResult.data;
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-300">

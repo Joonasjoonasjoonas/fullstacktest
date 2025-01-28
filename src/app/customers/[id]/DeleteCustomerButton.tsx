@@ -2,11 +2,12 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useCallback } from 'react';
+import { deleteCustomer } from '@/app/actions';
 
 export function DeleteCustomerButton({ customerId }: { customerId: string }) {
-  const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteRequested, setDeleteRequested] = useState(false);
+  const router = useRouter();
 
   const handleDelete = useCallback(async () => {
     if (isDeleting || deleteRequested) {
@@ -21,49 +22,31 @@ export function DeleteCustomerButton({ customerId }: { customerId: string }) {
     try {
       setIsDeleting(true);
       setDeleteRequested(true);
-      console.log('Sending DELETE request for customer:', customerId);
+      console.log('Attempting to delete customer:', customerId);
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const result = await deleteCustomer(customerId);
+      console.log('Delete result:', result);
 
-      const response = await fetch(`/api/customers/${customerId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to delete customer');
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to delete customer');
       }
 
       console.log('Delete successful, navigating...');
-      setTimeout(() => {
-        try {
-          router.push('/customers');
-          setTimeout(() => {
-            router.refresh();
-          }, 100);
-        } catch (navError) {
-          console.error('Navigation error:', navError);
-        }
-      }, 100);
+      router.push('/');
+      router.refresh();
 
-    } catch (error: unknown) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        console.error('Request timed out');
-        alert('Request timed out. Please try again.');
-      } else {
-        console.error('Delete error:', error);
-        alert(error instanceof Error ? error.message : 'Failed to delete customer');
-      }
-      setDeleteRequested(false);
+    } catch (error) {
+      console.error('Delete error details:', {
+        error,
+        message: error instanceof Error ? error.message : String(error),
+        name: error instanceof Error ? error.name : 'Unknown',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
+      alert(error instanceof Error ? error.message : 'Failed to delete customer');
     } finally {
       setIsDeleting(false);
+      setDeleteRequested(false);
     }
   }, [customerId, router, isDeleting, deleteRequested]);
 

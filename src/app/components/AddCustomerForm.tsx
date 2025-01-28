@@ -1,6 +1,9 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createCustomer } from '@/app/actions';
+import type { CreateCustomerData } from '@/services/db/customers';
 
 interface FormErrors {
   customerName?: string;
@@ -35,78 +38,60 @@ function validateInput(name: string, value: string): string | undefined {
 }
 
 export function AddCustomerForm() {
-  const formRef = useRef<HTMLFormElement>(null);
-  const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
+  const [errors, setErrors] = useState<FormErrors>({});
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setErrors({});
-    setMessage('');
-    setIsSubmitting(true);
-
-    const formData = new FormData(e.currentTarget);
-    const data = {
-      customerName: formData.get('customerName') as string,
-      contactName: formData.get('contactName') as string,
-      address: formData.get('address') as string,
-      city: formData.get('city') as string,
-      postalCode: formData.get('postalCode') as string,
-      country: formData.get('country') as string
-    };
-
-    // Validate all fields
-    const newErrors: FormErrors = {};
-    Object.entries(data).forEach(([key, value]) => {
-      const error = validateInput(key, value);
-      if (error) {
-        newErrors[key as keyof FormErrors] = error;
-      }
-    });
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      setIsSubmitting(false);
-      return;
-    }
-
+  async function handleSubmit(formData: FormData) {
     try {
-      console.log('Submitting form data:', data);
-      
-      const response = await fetch('/api/customers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+      setIsSubmitting(true);
+      const customerData: CreateCustomerData = {
+        customerName: formData.get('customerName') as string,
+        contactName: formData.get('contactName') as string,
+        address: formData.get('address') as string,
+        city: formData.get('city') as string,
+        postalCode: formData.get('postalCode') as string,
+        country: formData.get('country') as string,
+      };
+
+      // Validate all fields
+      const newErrors: FormErrors = {};
+      Object.entries(customerData).forEach(([key, value]) => {
+        const error = validateInput(key, value);
+        if (error) {
+          newErrors[key as keyof FormErrors] = error;
+        }
       });
 
-      console.log('Response status:', response.status);
-      const result = await response.json();
-      console.log('Response result:', result);
-
-      if (result.success) {
-        setMessageType('success');
-        setMessage(`Customer added successfully!`);
-        formRef.current?.reset();
-      } else {
-        throw new Error(result.error || 'Failed to add customer');
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        setIsSubmitting(false);
+        return;
       }
+
+      const result = await createCustomer(customerData);
+
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      router.refresh();
+      formData.target?.reset();
+      setMessageType('success');
+      setMessage('Customer added successfully!');
     } catch (error) {
       console.error('Error in form submission:', error);
       setMessageType('error');
-      setMessage('Failed to add customer. Please try again.');
+      setMessage('Failed to create customer. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <form 
-      ref={formRef}
-      onSubmit={handleSubmit} 
-      className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 mb-6"
-    >
+    <form action={handleSubmit} className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 mb-6">
       <h2 className="text-2xl font-bold text-white mb-4">Add New Customer</h2>
       {message && (
         <div className={`p-3 rounded mb-4 ${
