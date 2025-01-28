@@ -15,14 +15,20 @@ interface FormErrors {
 }
 
 function validateInput(name: string, value: string): string | undefined {
+  // Convert camelCase to proper display format (e.g., customerName -> Customer Name)
+  const displayName = name
+    .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+    .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+    .trim(); // Remove any extra spaces
+
   if (!value.trim()) {
-    return `${name} is required`;
+    return `${displayName} is required`;
   }
   if (value.length < 2) {
-    return `${name} must be at least 2 characters`;
+    return `${displayName} must be at least 2 characters`;
   }
   if (value.length > 100) {
-    return `${name} must be less than 100 characters`;
+    return `${displayName} must be less than 100 characters`;
   }
   return undefined;
 }
