@@ -48,6 +48,16 @@ export function AddCustomerForm() {
     [-webkit-text-fill-color:rgb(243,244,246)]
     [&:-webkit-autofill]:[-webkit-text-fill-color:rgb(243,244,246)]`;
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name } = e.target;
+    if (errors[name as keyof FormErrors]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: undefined
+      }));
+    }
+  };
+
   const handleReturnToForm = () => {
     setShowSuccessModal(false);
     formRef.current?.reset();
@@ -110,6 +120,7 @@ export function AddCustomerForm() {
               type="text"
               id="customerName"
               name="customerName"
+              onChange={handleInputChange}
               className={getInputClassName(errors.customerName)}
             />
             {errors.customerName && (
@@ -125,6 +136,7 @@ export function AddCustomerForm() {
               type="text"
               id="contactName"
               name="contactName"
+              onChange={handleInputChange}
               className={getInputClassName(errors.contactName)}
             />
             {errors.contactName && (
@@ -140,6 +152,7 @@ export function AddCustomerForm() {
               type="text"
               id="address"
               name="address"
+              onChange={handleInputChange}
               className={getInputClassName(errors.address)}
             />
             {errors.address && (
@@ -155,6 +168,7 @@ export function AddCustomerForm() {
               type="text"
               id="city"
               name="city"
+              onChange={handleInputChange}
               className={getInputClassName(errors.city)}
             />
             {errors.city && (
@@ -170,6 +184,7 @@ export function AddCustomerForm() {
               type="text"
               id="postalCode"
               name="postalCode"
+              onChange={handleInputChange}
               className={getInputClassName(errors.postalCode)}
             />
             {errors.postalCode && (
@@ -185,6 +200,7 @@ export function AddCustomerForm() {
               type="text"
               id="country"
               name="country"
+              onChange={handleInputChange}
               className={getInputClassName(errors.country)}
             />
             {errors.country && (
