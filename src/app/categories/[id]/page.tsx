@@ -1,8 +1,16 @@
 import Link from 'next/link';
 import { getCategoryProducts } from '@/services/db/categories';
+import { RowDataPacket } from 'mysql2';
+
+interface CategoryProduct extends RowDataPacket {
+  ProductID: number;
+  ProductName: string;
+  CategoryName: string;
+  CategoryID: number;
+}
 
 export default async function CategoryProducts({ params }: { params: { id: string } }) {
-  const products = await getCategoryProducts(params.id);
+  const products = await getCategoryProducts(params.id) as CategoryProduct[];
   const categoryName = products[0]?.CategoryName || 'Category';
 
   return (
@@ -17,7 +25,7 @@ export default async function CategoryProducts({ params }: { params: { id: strin
 
         <h1 className="text-3xl font-bold text-white mb-8">{categoryName} Products</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map((product: any) => (
+          {products.map((product) => (
             <Link
               href={`/products/${product.ProductID}`}
               key={product.ProductID}
